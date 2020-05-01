@@ -11,19 +11,23 @@ def move(board, no_pieces, old_coord, new_coord, turn):
             turn[new_coord].add_stack(substack)
         else:
             turn[new_coord] = substack
-        if turn[old_coord].get_number == 0:
+        if turn[old_coord].get_number() == 0:
             del turn[old_coord]
 
 def valid_move_check(board, stack, no_pieces, old_coord, new_coord):
     spaces = manhattan_distance(old_coord, new_coord)
-    if stack.get_number < no_pieces or stack.get_number < spaces:
+    if stack.get_number() < no_pieces or stack.get_number() < spaces:
         return False
     
     if new_coord[0] < 0 or new_coord[0] > 7 or new_coord[1] < 0 or new_coord[1] > 7:
         return False
 
-    if new_coord in board.enemy:
-        return False
+    if stack.get_colour() == board.my_colour:
+        if new_coord in board.enemy:
+            return False
+    else:
+        if new_coord in board.ally:
+            return False
 
     return True
 

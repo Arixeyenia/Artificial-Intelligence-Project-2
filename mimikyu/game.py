@@ -7,7 +7,19 @@ class Piece:
 
     def set_coordinates(self, coordinates):
         self.coordinates = coordinates
-    
+
+    def get_new_coordinates(self, direction, spaces):
+        if direction == Directions.left:
+            new_coordinates = self.coordinates[0] - spaces
+        elif direction == Directions.right:
+            new_coordinates = self.coordinates[0] + spaces
+        elif direction == Directions.up:
+            new_coordinates = self.coordinates[1] + spaces
+        elif direction == Directions.down:
+            new_coordinates = self.coordinates[1] - spaces
+        
+        return new_coordinates
+            
     def __str__(self):
         return self.colour
 
@@ -43,9 +55,10 @@ class Stack:
         return self.pieces[0].coordinates
 
 class Board:
-    def __init__(self, ally, enemy):
+    def __init__(self, ally, enemy, colour):
         self.ally = ally
         self.enemy = enemy
+        self.my_colour = colour[0].upper()
 
     def get_board_dict(self):
         board_dict = self.ally.copy()

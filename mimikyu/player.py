@@ -14,7 +14,7 @@ class ExamplePlayer:
         strings "white" or "black" correspondingly.
         """
         # TODO: Set up state representation.
-        self.game_board = Board({},{})
+        self.game_board = Board({},{}, colour)
         self.colour = colour
 
         _BLACK_START_SQUARES = [(0,7), (1,7),   (3,7), (4,7),   (6,7), (7,7), (0,6), (1,6),   (3,6), (4,6),   (6,6), (7,6)]
@@ -34,6 +34,7 @@ class ExamplePlayer:
                 self.game_board.ally[coordinate] = white_stack
             else:
                 self.game_board.enemy[coordinate] = white_stack
+        
 
     def action(self):
         """
