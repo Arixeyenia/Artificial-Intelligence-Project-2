@@ -54,27 +54,46 @@ def cutoff_test(state):
 
 def eval(state):
 
-    # Evaluation function
     # TODO: Determine weights to use
-    # F = w1(nEnemyTokenInRange - nOurTokenInRange) + w2(nEnemyToken - nOurToken)
+    # F = w1(nEnemyTokenInRange - nOurTokenInRange) + w2(nEnemyTokenAllyRange - nOurTokenAllyRange) 
+    #   + w3(nEnemyTokenEnemyRange - nOurTokenEnemyRange)
     
     # get number of enemies & allies token
     num_enemy = state.board.get_enemy_count
     num_ally = state.board.get_ally_count
     
-    ally_count = 0
-    enemy_count = 0
+    diff_total = num_ally - num_enemy
     
     # get number of enemy token in range and allies token in range
+    num_ally_in_range = 0
+    num_enemy_in_range = 0
+    
     for stack in state.board.ally:
         all_coordinates = get_pieces_affected_by_boom(state.board, stack.get_coordinates())
         for coordinates in all_coordinates:
             if state.board.ally[coordinates]:
-                ally_count += 1
+                num_ally_in_range += state.board.ally[coordinates].get_number()
             else:
-                enemy_count += 1
+                num_enemy_in_range += state.board.enemy[coordinates].get_number()
+                
+    diff_ally_boom = num_enemy_in_range - num_ally_in_range
+                
+    # get number of enemies and allies token within enemy's range of explosion
+    num_ally_in_enemy_range = 0
+    num_enemy_in_enemy_range = 0
+                
+    for stack in state.board.enemy:
+        all_coordinates = get_pieces_affected_by_boom(state.board, stack.get_coordinates())
+        for coordinates in all_coordinates:
+            if state.board.ally[coordinates]:
+                num_ally_in_enemy_range += state.board.ally[coordinates].get_number()
+            else:
+                num_enemy_in_enemy_range += state.board.enemy[coordinates].get_number()
+                
+    diff_enemy_boom = num_enemy_in_enemy_range - num_ally_in_enemy_range
         
-    eval_value = (num_enemy - num_ally) + (enemy_count - ally_count)
+    # evaluation value 
+    eval_value = diff_total + diff_ally_boom + diff_enemy_boom
     
     return eval_value
 
