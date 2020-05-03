@@ -44,6 +44,19 @@ def boom(board, coordinates):
     remove_stack(board, coordinates)
     for coordinate in all_coordinates:
         boom(board, coordinate)
+        
+# get pieces 
+def get_pieces_affected_by_boom(board, coordinates):
+    all_coordinates = []
+    all_coordinates = range_check(board, coordinates)
+    for coordinate in all_coordinates:
+        more_coordinates = range_check(board, coordinate)
+        for one_coordinate in more_coordinates:
+            if one_coordinate in all_coordinates:
+                continue
+            else:
+                all_coordinates.append(one_coordinate)
+    return all_coordinates
     
 # remove stack from the game/dict
 def remove_stack(board, coordinates):
