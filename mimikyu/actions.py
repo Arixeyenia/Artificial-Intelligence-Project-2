@@ -1,3 +1,5 @@
+import math
+from operator import itemgetter
 from mimikyu.game import Piece, Stack, Board, Directions
 
 # get all the possible moes
@@ -90,3 +92,18 @@ def range_check(board, coordinates):
                     continue
                 all_coordinates.append(check_coord)
     return all_coordinates
+
+
+def get_minimum_distance_from_enemy(board):
+    min_dist = math.inf
+
+    for a_stack in board.ally:
+        for e_stack in board.enemy:
+            distance = manhattan_distance(a_stack, e_stack)
+            if (distance < min_dist):
+                min_dist = distance
+    
+    return min_dist
+
+def sort_list_of_coordinates(list_of_coordinates):
+    return list_of_coordinates.sort(key=itemgetter(0))

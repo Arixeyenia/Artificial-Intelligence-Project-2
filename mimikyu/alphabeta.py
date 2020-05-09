@@ -1,7 +1,7 @@
 import math
 from random import randint
 from mimikyu.game import Directions, Board, Piece, Stack
-from mimikyu.actions import valid_move_check, move, boom, get_pieces_affected_by_boom
+from mimikyu.actions import valid_move_check, move, boom, get_pieces_affected_by_boom, get_minimum_distance_from_enemy
 
 
 class Node:
@@ -38,7 +38,10 @@ def alpha_beta_search(state):
 
 def max_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
-        return eval(state)
+        if get_minimum_distance_from_enemy(state.board) <= 2:
+            return quiscence(state, alpha, beta)
+        else:
+            return eval(state)
     for s in next_states(state).values():
         alpha = max(alpha, min_value(s, alpha, beta))
         if alpha >= beta:
@@ -47,14 +50,15 @@ def max_value(state, alpha=-math.inf, beta=math.inf):
 
 def min_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
-        return quiscence(state, alpha, beta)  # return evaluation value
+        if get_minimum_distance_from_enemy(state.board) <= 2:
+            return quiscence(state, alpha, beta)
+        else:
+            return eval(state)
     for s in next_states(state).values():
         beta = min(alpha, max_value(s, alpha, beta))
         if beta <= alpha:
             return alpha
     return beta
-
-# TODO: Change to quiscence search
 
 
 def cutoff_test(state):
@@ -74,7 +78,7 @@ def quiscence(state, alpha, beta):
         new_state = create_new_node(state)
         new_state.swap_turn()
         boom(new_state.board, capture)
-        score = -quiscence(new_state, alpha, beta)
+        score = -quiscence(new_state, -beta, -alpha)
         
         if (score >= beta):
             return beta
@@ -129,7 +133,7 @@ def get_all_captures(state):
     player = state.turn
     capture = []
     for stack in player:
-        capture.append(stack.get_coordinates())
+        capture.append(stack)
     return capture
 
 # create new node and update the depth
