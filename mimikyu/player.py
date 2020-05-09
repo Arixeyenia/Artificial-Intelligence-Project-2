@@ -1,5 +1,8 @@
 from mimikyu.game import Piece, Board, Directions, Stack
-from mimikyu.actions import move, boom
+from mimikyu.actions import move, boom, valid_move_check
+from mimikyu.alphabeta import Node
+from random import randint
+
 
 class ExamplePlayer:
     def __init__(self, colour):
@@ -14,11 +17,13 @@ class ExamplePlayer:
         strings "white" or "black" correspondingly.
         """
         # TODO: Set up state representation.
-        self.game_board = Board({},{}, colour)
+        self.game_board = Board({}, {}, colour)
         self.colour = colour
 
-        _BLACK_START_SQUARES = [(0,7), (1,7),   (3,7), (4,7),   (6,7), (7,7), (0,6), (1,6),   (3,6), (4,6),   (6,6), (7,6)]
-        _WHITE_START_SQUARES = [(0,1), (1,1),   (3,1), (4,1),   (6,1), (7,1), (0,0), (1,0),   (3,0), (4,0),   (6,0), (7,0)]
+        _BLACK_START_SQUARES = [(0, 7), (1, 7),   (3, 7), (4, 7),   (6, 7),
+                                (7, 7), (0, 6), (1, 6),   (3, 6), (4, 6),   (6, 6), (7, 6)]
+        _WHITE_START_SQUARES = [(0, 1), (1, 1),   (3, 1), (4, 1),   (6, 1),
+                                (7, 1), (0, 0), (1, 0),   (3, 0), (4, 0),   (6, 0), (7, 0)]
         for coordinate in _BLACK_START_SQUARES:
             black_piece = Piece(coordinate, "B")
             black_stack = Stack([black_piece])
@@ -34,7 +39,6 @@ class ExamplePlayer:
                 self.game_board.ally[coordinate] = white_stack
             else:
                 self.game_board.enemy[coordinate] = white_stack
-        
 
     def action(self):
         """
@@ -46,8 +50,8 @@ class ExamplePlayer:
         represented based on the spec's instructions for representing actions.
         """
         # TODO: Decide what action to take, and return it
-        return ("BOOM", (0, 0))
-
+        moves = self.get_all_moves()
+        return moves[randint(0, len(moves)-1)]
 
     def update(self, colour, action):
         """
@@ -73,9 +77,30 @@ class ExamplePlayer:
             turn = self.game_board.ally
         else:
             turn = self.game_board.enemy
-        
+
         if action[0] == "MOVE":
             move(self.game_board, action[1], action[2], action[3], turn)
 
         elif action[0] == "BOOM":
             boom(self.game_board, action[1])
+
+    # get all the possible moes
+    def get_all_moves(self):
+        turn = self.game_board.ally
+        moves = []
+        for stack in turn.values():
+            moves.append(('BOOM', stack.get_coordinates()))
+            for no_pieces in range(1, stack.get_number() + 1):
+                for spaces in range(1, stack.get_number() + 1):
+                    piece = stack.get_substack(no_pieces)
+                    current_coordinates = piece.get_coordinates()
+                    
+                    for d in Directions:
+                        new_coordinate = piece.get_new_coordinates(d, spaces)
+                        valid = valid_move_check(
+                            self.game_board, stack, no_pieces, current_coordinates, new_coordinate)
+                        if not valid:
+                            continue
+                        else:
+                            moves.append(('MOVE', no_pieces, current_coordinates, new_coordinate))
+        return moves

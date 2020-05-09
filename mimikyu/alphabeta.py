@@ -8,6 +8,8 @@ class Node:
     def __init__(self, board, parent, alpha=-math.inf, beta=math.inf):
         self.board = board
         self.parent = parent
+        self.alpha = alpha
+        self.beta = beta
         self.successors = []
         if self.parent is None:
             self.depth = 0
@@ -21,8 +23,15 @@ class Node:
         elif self.turn == self.board.enemy:
             self.turn = self.board.ally
 
+def alpha_beta_search(state):
+    # test and print
+    
+    
+    
+    return state
+       
 
-def max_value(state, alpha, beta):
+def max_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
         return eval(state)
     for s in successors(state):
@@ -32,14 +41,14 @@ def max_value(state, alpha, beta):
     return alpha
 
 
-def min_value(state, alpha, beta):
+def min_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
-        return eval(state)
+        return eval(state) # return evaluation value
     for s in successors(state):
-        alpha = min(alpha, max_value(s, alpha, beta))
-        if alpha >= beta:
-            return beta
-    return alpha
+        beta = min(alpha, max_value(s, alpha, beta))
+        if beta <= alpha:
+            return alpha
+    return beta
 
 # TODO: Change to quiscence search
 
@@ -51,6 +60,41 @@ def cutoff_test(state):
         return True
 
 # TODO: Create search evaluation
+
+def successors(state):
+    turn = state.turn
+    s = []
+    for stack in turn:
+        new_state = create_new_node(state)
+        boom(new_state.board, stack.get_coordinaates())
+        s.append(new_state)
+        for no_pieces in len(stack):
+            for spaces in len(stack):
+
+                piece = stack[no_pieces]
+                current_coordinates = piece.coordinates
+                new_coordinate = piece.get_new_coordinate(d, spaces)
+
+                for d in Directions:
+                    valid = valid_move_check(
+                        state.board, stack, no_pieces, current_coordinates, new_coordinate)
+                    if not valid:
+                        continue
+                    else:
+                        new_state = create_new_node(state)
+                        move(new_state.board, no_pieces, current_coordinates,
+                             new_coordinate, new_state.turn)
+                        s.append(new_state)
+    return s
+
+
+
+
+def create_new_node(state):
+    new_board = state.board.get_copy()
+    new_state = Node(new_board, state)
+    new_state.swap_turn()
+    return new_state
 
 def eval(state):
 
@@ -89,44 +133,13 @@ def eval(state):
                 num_ally_in_enemy_range += state.board.ally[coordinates].get_number()
             else:
                 num_enemy_in_enemy_range += state.board.enemy[coordinates].get_number()
-                
+
     diff_enemy_boom = num_enemy_in_enemy_range - num_ally_in_enemy_range
         
+    
+
     # evaluation value 
     eval_value = diff_total + diff_ally_boom + diff_enemy_boom
     
     return eval_value
 
-
-def successors(state):
-    turn = state.turn
-    s = []
-    for stack in turn:
-        new_state = create_new_node(state)
-        boom(new_state.board, stack.get_coordinaates())
-        s.append(new_state)
-        for no_pieces in len(stack):
-            for spaces in len(stack):
-
-                piece = stack[no_pieces]
-                current_coordinates = piece.coordinates
-                new_coordinate = piece.get_new_coordinate(d, spaces)
-
-                for d in Directions:
-                    valid = valid_move_check(
-                        state.board, stack, no_pieces, current_coordinates, new_coordinate)
-                    if not valid:
-                        continue
-                    else:
-                        new_state = create_new_node(state)
-                        move(new_state.board, no_pieces, current_coordinates,
-                             new_coordinate, new_state.turn)
-                        s.append(new_state)
-    return s
-
-
-def create_new_node(state):
-    new_board = state.board.get_copy()
-    new_state = Node(new_board, state)
-    new_state.swap_turn()
-    return new_state

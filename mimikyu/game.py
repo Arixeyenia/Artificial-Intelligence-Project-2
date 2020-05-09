@@ -1,4 +1,6 @@
-import enum, copy
+import enum
+import copy
+
 
 class Piece:
     def __init__(self, coordinates, colour):
@@ -17,11 +19,12 @@ class Piece:
             new_coordinates = self.coordinates[1] + spaces
         elif direction == Directions.down:
             new_coordinates = self.coordinates[1] - spaces
-        
+
         return new_coordinates
-            
+
     def __str__(self):
         return self.colour
+
 
 class Stack:
     def __init__(self, pieces):
@@ -47,12 +50,24 @@ class Stack:
 
     def get_colour(self):
         return self.pieces[0].colour
-    
+
     def get_number(self):
         return len(self.pieces)
 
     def get_coordinates(self):
         return self.pieces[0].coordinates
+    
+    def get_new_coordinates(self, direction, spaces):
+        if direction == Directions.left:
+            new_coordinates = (self.get_coordinates()[0] - spaces, self.get_coordinates()[1])
+        elif direction == Directions.right:
+            new_coordinates = (self.get_coordinates()[0] + spaces, self.get_coordinates()[1])
+        elif direction == Directions.up:
+            new_coordinates = (self.get_coordinates()[0], self.get_coordinates()[1] + spaces)
+        elif direction == Directions.down:
+            new_coordinates = (self.get_coordinates()[0], self.get_coordinates()[1] - spaces)
+        return new_coordinates
+
 
 class Board:
     def __init__(self, ally, enemy, colour):
@@ -63,7 +78,7 @@ class Board:
     def get_board_dict(self):
         board_dict = self.ally.copy()
         board_dict.update(self.enemy.copy())
-        
+
         return board_dict
 
     def get_copy(self):
@@ -74,6 +89,7 @@ class Board:
 
     def get_enemy_count(self):
         return len(self.enemy)
+
 
 class Directions(enum.Enum):
     left = 1
