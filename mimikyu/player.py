@@ -1,6 +1,6 @@
 from mimikyu.game import Piece, Board, Directions, Stack
 from mimikyu.actions import move, boom, valid_move_check
-from mimikyu.alphabeta import Node
+from mimikyu.alphabeta import Node, alpha_beta_search
 from random import randint
 
 
@@ -50,8 +50,11 @@ class ExamplePlayer:
         represented based on the spec's instructions for representing actions.
         """
         # TODO: Decide what action to take, and return it
-        moves = self.get_all_moves()
-        return moves[randint(0, len(moves)-1)]
+        # moves = self.get_all_moves()
+        # return moves[randint(0, len(moves)-1)]
+        return alpha_beta_search(Node(self.game_board, None))
+        
+        
 
     def update(self, colour, action):
         """

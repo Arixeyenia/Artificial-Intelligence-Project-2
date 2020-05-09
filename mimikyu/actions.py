@@ -1,5 +1,9 @@
 from mimikyu.game import Piece, Stack, Board, Directions
 
+# get all the possible moes
+
+
+
 def move(board, no_pieces, old_coord, new_coord, turn):
     stack = turn[old_coord]
     valid = valid_move_check(board, stack, no_pieces, old_coord, new_coord)
@@ -14,11 +18,12 @@ def move(board, no_pieces, old_coord, new_coord, turn):
         if turn[old_coord].get_number() == 0:
             del turn[old_coord]
 
+
 def valid_move_check(board, stack, no_pieces, old_coord, new_coord):
     spaces = manhattan_distance(old_coord, new_coord)
     if stack.get_number() < no_pieces or stack.get_number() < spaces:
         return False
-    
+
     if new_coord[0] < 0 or new_coord[0] > 7 or new_coord[1] < 0 or new_coord[1] > 7:
         return False
 
@@ -31,21 +36,25 @@ def valid_move_check(board, stack, no_pieces, old_coord, new_coord):
 
     return True
 
+
 def manhattan_distance(old_coord, new_coord):
     dx = abs(old_coord[0] -
              new_coord[0])
     dy = abs(old_coord[1] -
              new_coord[1])
-    
+
     return (dx + dy)
+
 
 def boom(board, coordinates):
     all_coordinates = range_check(board, coordinates)
     remove_stack(board, coordinates)
     for coordinate in all_coordinates:
         boom(board, coordinate)
-        
-# get pieces 
+
+# get pieces
+
+
 def get_pieces_affected_by_boom(board, coordinates):
     all_coordinates = []
     all_coordinates = range_check(board, coordinates)
@@ -57,14 +66,16 @@ def get_pieces_affected_by_boom(board, coordinates):
             else:
                 all_coordinates.append(one_coordinate)
     return all_coordinates
-    
+
 # remove stack from the game/dict
+
+
 def remove_stack(board, coordinates):
     if coordinates in board.ally:
         board.ally.pop(coordinates)
     if coordinates in board.enemy:
         board.enemy.pop(coordinates)
-        
+
 
 # return coordinates with stacks that is in the range of the stack specified
 def range_check(board, coordinates):
