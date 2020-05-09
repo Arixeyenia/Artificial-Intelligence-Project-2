@@ -47,7 +47,7 @@ def max_value(state, alpha=-math.inf, beta=math.inf):
 
 def min_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
-        return eval(state)  # return evaluation value
+        return quiscence(state, alpha, beta)  # return evaluation value
     for s in next_states(state).values():
         beta = min(alpha, max_value(s, alpha, beta))
         if beta <= alpha:
@@ -56,13 +56,32 @@ def min_value(state, alpha=-math.inf, beta=math.inf):
 
 # TODO: Change to quiscence search
 
+
 def cutoff_test(state):
     if state.depth == 5:
         return False
     else:
         return True
 
-# TODO: Create search evaluation
+def quiscence(state, alpha, beta):
+    stand_pat = eval(state)
+    if (stand_pat >= beta):
+        return beta
+    if (alpha < stand_pat):
+        alpha = stand_pat
+    
+    for capture in get_all_captures(state):
+        new_state = create_new_node(state)
+        new_state.swap_turn()
+        boom(new_state.board, capture)
+        score = -quiscence(new_state, alpha, beta)
+        
+        if (score >= beta):
+            return beta
+        if (score > alpha):
+            alpha = score
+
+    return alpha
 
 # get all the possible moves
 def get_all_moves(state):
@@ -86,6 +105,7 @@ def get_all_moves(state):
                             ('MOVE', no_pieces, current_coordinates, new_coordinate))
     return moves
 
+
 def next_states(state):
     s = {}
     s_moves = get_all_moves(state)
@@ -103,6 +123,14 @@ def next_states(state):
             s[s_move] = new_state
         new_state.swap_turn()
     return s
+
+
+def get_all_captures(state):
+    player = state.turn
+    capture = []
+    for stack in player:
+        capture.append(stack.get_coordinates())
+    return capture
 
 # create new node and update the depth
 def create_new_node(state):
