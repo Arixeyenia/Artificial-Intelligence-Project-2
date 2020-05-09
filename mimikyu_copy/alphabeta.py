@@ -1,8 +1,8 @@
 import math
 from random import randint
 from mimikyu.game import Directions, Board, Piece, Stack
-from mimikyu.actions import valid_move_check, move, boom, get_pieces_affected_by_boom, get_minimum_distance_from_enemy
-from mimikyu.transposition_table import TT
+from mimikyu.actions import valid_move_check, move, boom, get_pieces_affected_by_boom
+
 
 class Node:
     def __init__(self, board, parent, alpha=-math.inf, beta=math.inf):
@@ -23,12 +23,7 @@ class Node:
         elif self.turn == self.board.enemy:
             self.turn = self.board.ally
 
-def alpha_beta_search(state, TT):
-    #check transposition table
-    move = TT.get_move(state.board)
-    if (move != False):
-        return move
-        
+def alpha_beta_search(state):
     # test and print
     v_max = -math.inf
     best_move = None
@@ -43,11 +38,7 @@ def alpha_beta_search(state, TT):
 
 def max_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
-        # if enemy is within range, proceed capture strategy
-        if get_minimum_distance_from_enemy(state.board) <= 2:
-            return quiscence(state, alpha, beta)
-        else:
-            return eval(state)
+        return eval(state)
     for s in next_states(state).values():
         alpha = max(alpha, min_value(s, alpha, beta))
         if alpha >= beta:
@@ -56,17 +47,14 @@ def max_value(state, alpha=-math.inf, beta=math.inf):
 
 def min_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
-        # if enemy is within range, proceed capture strategy
-        if get_minimum_distance_from_enemy(state.board) <= 2:
-            return quiscence(state, alpha, beta)
-        else:
-            return eval(state)
+        return eval(state)  # return evaluation value
     for s in next_states(state).values():
         beta = min(alpha, max_value(s, alpha, beta))
         if beta <= alpha:
             return alpha
     return beta
 
+# TODO: Change to quiscence search
 
 def cutoff_test(state):
     if state.depth == 5:
@@ -74,25 +62,7 @@ def cutoff_test(state):
     else:
         return True
 
-def quiscence(state, alpha, beta):
-    stand_pat = eval(state)
-    if (stand_pat >= beta):
-        return beta
-    if (alpha < stand_pat):
-        alpha = stand_pat
-    
-    for capture in get_all_captures(state):
-        new_state = create_new_node(state)
-        new_state.swap_turn()
-        boom(new_state.board, capture)
-        score = -quiscence(new_state, -beta, -alpha)
-        
-        if (score >= beta):
-            return beta
-        if (score > alpha):
-            alpha = score
-
-    return alpha
+# TODO: Create search evaluation
 
 # get all the possible moves
 def get_all_moves(state):
@@ -116,7 +86,6 @@ def get_all_moves(state):
                             ('MOVE', no_pieces, current_coordinates, new_coordinate))
     return moves
 
-
 def next_states(state):
     s = {}
     s_moves = get_all_moves(state)
@@ -135,14 +104,6 @@ def next_states(state):
         new_state.swap_turn()
     return s
 
-
-def get_all_captures(state):
-    player = state.turn
-    capture = []
-    for stack in player:
-        capture.append(stack)
-    return capture
-
 # create new node and update the depth
 def create_new_node(state):
     new_board = state.board.get_copy()
@@ -153,29 +114,5 @@ def create_new_node(state):
 
 def eval(state):
 
-    num_enemy = state.board.get_enemy_count()
-    num_ally = state.board.get_ally_count()
+    return randint(-20,20)
     
-    # ally_stacks = state.board.ally.values()
-    
-    # # find maximum stack size and reward player for having stacks
-    # max_stack_size = max([x.get_number() for x in ally_stacks] + [0])
-   
-    # eval_value = num_ally + (12 - num_enemy) + max_stack_size
-    
-    
-    # Escape when in danger
-        # evaluate your safety: 
-            # distance between closest thing that can explode your allies
-            # stack explosion: the state in which stack escapes furthest from the danger is rewarded
-            # 
-    # kill as many pieces as possible with the least amount of pieces
-    
-    # make piece close to enemy
-    
-    
-    eval_value = 1.5*(12-num_enemy) + (num_ally) 
-
-    return eval_value
-
-# def get_minimum

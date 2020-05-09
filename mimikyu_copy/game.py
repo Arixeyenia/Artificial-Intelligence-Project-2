@@ -10,6 +10,18 @@ class Piece:
     def set_coordinates(self, coordinates):
         self.coordinates = coordinates
 
+    def get_new_coordinates(self, direction, spaces):
+        if direction == Directions.left:
+            new_coordinates = self.coordinates[0] - spaces
+        elif direction == Directions.right:
+            new_coordinates = self.coordinates[0] + spaces
+        elif direction == Directions.up:
+            new_coordinates = self.coordinates[1] + spaces
+        elif direction == Directions.down:
+            new_coordinates = self.coordinates[1] - spaces
+
+        return new_coordinates
+
     def __str__(self):
         return self.colour
 
@@ -73,21 +85,10 @@ class Board:
         return copy.deepcopy(self)
 
     def get_ally_count(self):
-        
-        ally_count = 0
-        
-        for ally in self.ally.values():
-            ally_count += ally.get_number()
-        
-        return ally_count
+        return len(self.ally)
 
     def get_enemy_count(self):
-        enemy_count = 0
-        
-        for enemy in self.enemy.values():
-            enemy_count += enemy.get_number()
-        
-        return enemy_count
+        return len(self.enemy)
 
 
 class Directions(enum.Enum):
