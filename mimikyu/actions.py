@@ -106,4 +106,5 @@ def get_minimum_distance_from_enemy(board):
     return min_dist
 
 def sort_list_of_coordinates(list_of_coordinates):
-    return list_of_coordinates.sort(key=itemgetter(0))
+    list_of_coordinates.sort(key=itemgetter(0,1))
+    return list_of_coordinates

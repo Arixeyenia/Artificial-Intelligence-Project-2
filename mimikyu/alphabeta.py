@@ -2,7 +2,7 @@ import math
 from random import randint
 from mimikyu.game import Directions, Board, Piece, Stack
 from mimikyu.actions import valid_move_check, move, boom, get_pieces_affected_by_boom, get_minimum_distance_from_enemy
-
+from mimikyu.transposition_table import TT
 
 class Node:
     def __init__(self, board, parent, alpha=-math.inf, beta=math.inf):
@@ -23,7 +23,12 @@ class Node:
         elif self.turn == self.board.enemy:
             self.turn = self.board.ally
 
-def alpha_beta_search(state):
+def alpha_beta_search(state, TT):
+    #check transposition table
+    move = TT.get_move(state.board)
+    if (move != False):
+        return move
+        
     # test and print
     v_max = -math.inf
     best_move = None

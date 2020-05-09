@@ -1,6 +1,7 @@
 from mimikyu.game import Piece, Board, Directions, Stack
 from mimikyu.actions import move, boom, valid_move_check
 from mimikyu.alphabeta import Node, alpha_beta_search
+from mimikyu.transposition_table import TT
 from random import randint
 
 
@@ -39,6 +40,9 @@ class ExamplePlayer:
                 self.game_board.ally[coordinate] = white_stack
             else:
                 self.game_board.enemy[coordinate] = white_stack
+        
+        self.TT = TT(colour)
+        print("stop")
 
     def action(self):
         """
@@ -52,7 +56,7 @@ class ExamplePlayer:
         # TODO: Decide what action to take, and return it
         # moves = self.get_all_moves()
         # return moves[randint(0, len(moves)-1)]
-        return alpha_beta_search(Node(self.game_board, None))
+        return alpha_beta_search(Node(self.game_board, None), self.TT)
         
         
 
