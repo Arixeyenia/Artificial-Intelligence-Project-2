@@ -114,50 +114,21 @@ def create_new_node(state):
 
 def eval(state):
 
-    # TODO: Determine weights to use
-    # F = w1(nEnemyTokenInRange - nOurTokenInRange) + w2(nEnemyTokenAllyRange - nOurTokenAllyRange)
-    #   + w3(nEnemyTokenEnemyRange - nOurTokenEnemyRange)
-
-    return randint(-20,20)
+    # return randint(-20,20)
     # get number of enemies & allies token
-    num_enemy = state.board.get_enemy_count
-    num_ally = state.board.get_ally_count
-
-    diff_total = num_ally - num_enemy
-
-    # get number of enemy token in range and allies token in range
-    num_ally_in_range = 0
-    num_enemy_in_range = 0
-
-    for stack in state.board.ally:
-        all_coordinates = get_pieces_affected_by_boom(
-            state.board, stack.get_coordinates())
-        for coordinates in all_coordinates:
-            if state.board.ally[coordinates]:
-                num_ally_in_range += state.board.ally[coordinates].get_number()
-            else:
-                num_enemy_in_range += state.board.enemy[coordinates].get_number()
-
-    diff_ally_boom = num_enemy_in_range - num_ally_in_range
-
-    # get number of enemies and allies token within enemy's range of explosion
-    num_ally_in_enemy_range = 0
-    num_enemy_in_enemy_range = 0
-
-    for stack in state.board.enemy:
-        all_coordinates = get_pieces_affected_by_boom(
-            state.board, stack.get_coordinates())
-        for coordinates in all_coordinates:
-            if state.board.ally[coordinates]:
-                num_ally_in_enemy_range += state.board.ally[coordinates].get_number(
-                )
-            else:
-                num_enemy_in_enemy_range += state.board.enemy[coordinates].get_number(
-                )
-
-    diff_enemy_boom = num_enemy_in_enemy_range - num_ally_in_enemy_range
-
-    # evaluation value
-    eval_value = diff_total + diff_ally_boom + diff_enemy_boom
+    num_enemy = state.board.get_enemy_count()
+    num_ally = state.board.get_ally_count()
+    
+    # bonus for killing enemy
+    # bonus for reachability = how far u can move and throw your piece = make stack
+    # longest movement you can do
+    
+    # get number of stacks
+    ally_stacks = state.board.ally.values()
+    
+    # find maximum stack size and reward player for having stacks
+    max_stack_size = max([x.get_number() for x in ally_stacks] + [0])
+   
+    eval_value = num_ally + (12 - num_enemy) + max_stack_size
 
     return eval_value
