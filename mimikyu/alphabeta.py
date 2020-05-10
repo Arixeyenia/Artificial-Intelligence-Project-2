@@ -25,9 +25,10 @@ class Node:
 
 def alpha_beta_search(state, TT):
     #check transposition table
-    move = TT.get_move(state.board)
-    if (move != False):
-        return move
+    if (get_minimum_distance_from_enemy(state.board) > 2):
+        move = TT.get_move(state.board)
+        if (move != False):
+            return move
         
     # test and print
     v_max = -math.inf
@@ -44,10 +45,10 @@ def alpha_beta_search(state, TT):
 def max_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
         # if enemy is within range, proceed capture strategy
-        if get_minimum_distance_from_enemy(state.board) <= 2:
-            return quiscence(state, alpha, beta)
-        else:
-            return eval(state)
+        #if get_minimum_distance_from_enemy(state.board) <= 2:
+        #    return quiscence(state, alpha, beta)
+        #else:
+        return eval(state)
     for s in next_states(state).values():
         alpha = max(alpha, min_value(s, alpha, beta))
         if alpha >= beta:
@@ -57,10 +58,10 @@ def max_value(state, alpha=-math.inf, beta=math.inf):
 def min_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
         # if enemy is within range, proceed capture strategy
-        if get_minimum_distance_from_enemy(state.board) <= 2:
-            return quiscence(state, alpha, beta)
-        else:
-            return eval(state)
+        # if get_minimum_distance_from_enemy(state.board) <= 2:
+        #    return quiscence(state, alpha, beta)
+        # else:
+        return eval(state)
     for s in next_states(state).values():
         beta = min(alpha, max_value(s, alpha, beta))
         if beta <= alpha:
@@ -69,7 +70,7 @@ def min_value(state, alpha=-math.inf, beta=math.inf):
 
 
 def cutoff_test(state):
-    if state.depth == 5:
+    if state.depth == 10:
         return False
     else:
         return True
@@ -170,7 +171,7 @@ def eval(state):
     sacrifice_few_for_many = explode_clusters(state)
     sacrifice_one_for_one = 0
     
-    eval_value = 5*enemies_killed + 6*allies_left + 0.2*minimal_loss + sacrifice_few_for_many + sacrifice_one_for_one
+    eval_value = 1*enemies_killed + 2*allies_left + 0.2*minimal_loss + sacrifice_few_for_many + sacrifice_one_for_one
     return eval_value
 
 
