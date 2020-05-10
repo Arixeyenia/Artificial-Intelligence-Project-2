@@ -44,10 +44,10 @@ def alpha_beta_search(state, TT):
 def max_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
         # if enemy is within range, proceed capture strategy
-        if get_minimum_distance_from_enemy(state.board) <= 2:
-            return quiscence(state, alpha, beta)
-        else:
-            return eval(state)
+        # if get_minimum_distance_from_enemy(state.board) <= 2:
+        #     return quiscence(state, alpha, beta)
+        # else:
+        return eval(state)
     for s in next_states(state).values():
         alpha = max(alpha, min_value(s, alpha, beta))
         if alpha >= beta:
@@ -56,11 +56,11 @@ def max_value(state, alpha=-math.inf, beta=math.inf):
 
 def min_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
-        # if enemy is within range, proceed capture strategy
-        if get_minimum_distance_from_enemy(state.board) <= 2:
-            return quiscence(state, alpha, beta)
-        else:
-            return eval(state)
+        # # if enemy is within range, proceed capture strategy
+        # if get_minimum_distance_from_enemy(state.board) <= 2:
+        #     return quiscence(state, alpha, beta)
+        # else:
+        return eval(state)
     for s in next_states(state).values():
         beta = min(alpha, max_value(s, alpha, beta))
         if beta <= alpha:
@@ -152,30 +152,56 @@ def create_new_node(state):
 
 
 def eval(state):
-
-    num_enemy = state.board.get_enemy_count()
-    num_ally = state.board.get_ally_count()
     
-    # ally_stacks = state.board.ally.values()
+    enemies_killed = 12-state.board.get_enemy_count()
+    allies_left = state.board.get_ally_count()
     
-    # # find maximum stack size and reward player for having stacks
-    # max_stack_size = max([x.get_number() for x in ally_stacks] + [0])
-   
-    # eval_value = num_ally + (12 - num_enemy) + max_stack_size
+    if (enemies_killed == 12 and allies_left > 0):
+        return math.inf
+    if (allies_left == 0):
+        return -math.inf
     
+    # 1. Escape if in danger
+    # 3. Trying to escape, choose the best path
+    minimal_loss = minimize_loss(state)
     
-    # Escape when in danger
-        # evaluate your safety: 
-            # distance between closest thing that can explode your allies
-            # stack explosion: the state in which stack escapes furthest from the danger is rewarded
-            # 
-    # kill as many pieces as possible with the least amount of pieces
+    # 2. Evaluate whether to run/throw/capture
+    sacrifice_one_for_many = 0
+    sacrifice_few_for_many = 0
+    sacrifice_one_for_one = 0
     
-    # make piece close to enemy
-    
-    
-    eval_value = 1.5*(12-num_enemy) + (num_ally) 
-
+    eval_value = 5*enemies_killed + 6*allies_left + 0.2*minimal_loss + sacrifice_few_for_many + sacrifice_one_for_one
     return eval_value
 
-# def get_minimum
+
+def minimize_loss(state):
+    num_ally_in_enemy_range = 0
+    num_enemy_in_enemy_range = 0
+    max_util = []
+
+    for stack in state.board.enemy.values():
+        all_coordinates = get_pieces_affected_by_boom(
+            state.board, stack.get_coordinates())
+        for coordinates in all_coordinates:
+            if coordinates in state.board.ally:
+                num_ally_in_enemy_range += state.board.ally[coordinates].get_number()
+            else:
+                num_enemy_in_enemy_range += state.board.enemy[coordinates].get_number()
+        max_util.append(num_ally_in_enemy_range-num_enemy_in_enemy_range)
+    return min([x for x in max_util])
+
+# def sacrifice_one_for_many(state):
+    
+#     num_ally_in_range = 0
+#     num_enemy_in_range = 0
+
+#     for stack in state.board.ally.values():
+#         all_coordinates = get_pieces_affected_by_boom(
+#             state.board, stack.get_coordinates())
+#         for coordinates in all_coordinates:
+#             if coordinates in state.board.ally:
+#                 num_ally_in_range += state.board.ally[coordinates].get_number()
+#             else:
+#                 num_enemy_in_range += state.board.enemy[coordinates].get_number()
+
+#     diff_ally_boom = num_enemy_in_range - num_ally_in_range

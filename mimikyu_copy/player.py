@@ -1,6 +1,7 @@
-from mimikyu.game import Piece, Board, Directions, Stack
-from mimikyu.actions import move, boom, valid_move_check
-from mimikyu.alphabeta import Node, alpha_beta_search
+from mimikyu_copy.game import Piece, Board, Directions, Stack
+from mimikyu_copy.actions import move, boom, valid_move_check
+from mimikyu_copy.alphabeta import Node, alpha_beta_search
+from mimikyu_copy.transposition_table import TT
 from random import randint
 
 
@@ -39,6 +40,9 @@ class ExamplePlayer:
                 self.game_board.ally[coordinate] = white_stack
             else:
                 self.game_board.enemy[coordinate] = white_stack
+        
+        self.TT = TT(colour)
+        print("stop")
 
     def action(self):
         """
@@ -52,7 +56,7 @@ class ExamplePlayer:
         # TODO: Decide what action to take, and return it
         # moves = self.get_all_moves()
         # return moves[randint(0, len(moves)-1)]
-        return alpha_beta_search(Node(self.game_board, None))
+        return alpha_beta_search(Node(self.game_board, None), self.TT)
         
         
 
@@ -87,23 +91,23 @@ class ExamplePlayer:
         elif action[0] == "BOOM":
             boom(self.game_board, action[1])
 
-    # get all the possible moes
-    def get_all_moves(self):
-        turn = self.game_board.ally
-        moves = []
-        for stack in turn.values():
-            moves.append(('BOOM', stack.get_coordinates()))
-            for no_pieces in range(1, stack.get_number() + 1):
-                for spaces in range(1, stack.get_number() + 1):
-                    piece = stack.get_substack(no_pieces)
-                    current_coordinates = piece.get_coordinates()
+    # # get all the possible moes
+    # def get_all_moves(self):
+    #     turn = self.game_board.ally
+    #     moves = []
+    #     for stack in turn.values():
+    #         moves.append(('BOOM', stack.get_coordinates()))
+    #         for no_pieces in range(1, stack.get_number() + 1):
+    #             for spaces in range(1, stack.get_number() + 1):
+    #                 piece = stack.get_substack(no_pieces)
+    #                 current_coordinates = piece.get_coordinates()
                     
-                    for d in Directions:
-                        new_coordinate = piece.get_new_coordinates(d, spaces)
-                        valid = valid_move_check(
-                            self.game_board, stack, no_pieces, current_coordinates, new_coordinate)
-                        if not valid:
-                            continue
-                        else:
-                            moves.append(('MOVE', no_pieces, current_coordinates, new_coordinate))
-        return moves
+    #                 for d in Directions:
+    #                     new_coordinate = piece.get_new_coordinates(d, spaces)
+    #                     valid = valid_move_check(
+    #                         self.game_board, stack, no_pieces, current_coordinates, new_coordinate)
+    #                     if not valid:
+    #                         continue
+    #                     else:
+    #                         moves.append(('MOVE', no_pieces, current_coordinates, new_coordinate))
+    #     return moves
