@@ -44,10 +44,10 @@ def alpha_beta_search(state, TT):
 def max_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
         # if enemy is within range, proceed capture strategy
-        # if get_minimum_distance_from_enemy(state.board) <= 2:
-        #     return quiscence(state, alpha, beta)
-        # else:
-        return eval(state)
+        if get_minimum_distance_from_enemy(state.board) <= 2:
+            return quiscence(state, alpha, beta)
+        else:
+            return eval(state)
     for s in next_states(state).values():
         alpha = max(alpha, min_value(s, alpha, beta))
         if alpha >= beta:
@@ -56,11 +56,11 @@ def max_value(state, alpha=-math.inf, beta=math.inf):
 
 def min_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
-        # # if enemy is within range, proceed capture strategy
-        # if get_minimum_distance_from_enemy(state.board) <= 2:
-        #     return quiscence(state, alpha, beta)
-        # else:
-        return eval(state)
+        # if enemy is within range, proceed capture strategy
+        if get_minimum_distance_from_enemy(state.board) <= 2:
+            return quiscence(state, alpha, beta)
+        else:
+            return eval(state)
     for s in next_states(state).values():
         beta = min(alpha, max_value(s, alpha, beta))
         if beta <= alpha:
@@ -167,7 +167,7 @@ def eval(state):
     
     # 2. Evaluate whether to run/throw/capture
     sacrifice_one_for_many = 0
-    sacrifice_few_for_many = 0
+    sacrifice_few_for_many = explode_clusters(state)
     sacrifice_one_for_one = 0
     
     eval_value = 5*enemies_killed + 6*allies_left + 0.2*minimal_loss + sacrifice_few_for_many + sacrifice_one_for_one
@@ -187,21 +187,23 @@ def minimize_loss(state):
                 num_ally_in_enemy_range += state.board.ally[coordinates].get_number()
             else:
                 num_enemy_in_enemy_range += state.board.enemy[coordinates].get_number()
-        max_util.append(num_ally_in_enemy_range-num_enemy_in_enemy_range)
-    return min([x for x in max_util])
+        max_util.append(num_enemy_in_enemy_range-num_ally_in_enemy_range)
+        
+    return max([x for x in max_util])
 
-# def sacrifice_one_for_many(state):
+def explode_clusters(state):
     
-#     num_ally_in_range = 0
-#     num_enemy_in_range = 0
+    num_ally_in_range = 0
+    num_enemy_in_range = 0
+    max_util = []
 
-#     for stack in state.board.ally.values():
-#         all_coordinates = get_pieces_affected_by_boom(
-#             state.board, stack.get_coordinates())
-#         for coordinates in all_coordinates:
-#             if coordinates in state.board.ally:
-#                 num_ally_in_range += state.board.ally[coordinates].get_number()
-#             else:
-#                 num_enemy_in_range += state.board.enemy[coordinates].get_number()
-
-#     diff_ally_boom = num_enemy_in_range - num_ally_in_range
+    for stack in state.board.ally.values():
+        all_coordinates = get_pieces_affected_by_boom(
+            state.board, stack.get_coordinates())
+        for coordinates in all_coordinates:
+            if coordinates in state.board.ally:
+                num_ally_in_range += state.board.ally[coordinates].get_number()
+            else:
+                num_enemy_in_range += state.board.enemy[coordinates].get_number()
+        max_util.append(num_enemy_in_range-num_ally_in_range)
+    return max([x for x in max_util])
