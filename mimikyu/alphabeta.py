@@ -1,7 +1,7 @@
 import math
 from random import randint
 from mimikyu.game import Directions, Board, Piece, Stack
-from mimikyu.actions import valid_move_check, move, boom, get_pieces_affected_by_boom, get_minimum_distance_from_enemy
+from mimikyu.actions import valid_move_check, move, boom, get_pieces_affected_by_boom, get_minimum_distance_from_enemy, get_minimum_distance_from_enemy_to_our_stack, get_enemy_pieces_in_blast_range, get_ally_pieces_in_blast_range
 from mimikyu.transposition_table import TT
 
 class Node:
@@ -16,6 +16,7 @@ class Node:
         else:
             self.depth = self.parent.depth + 1
         self.turn = self.board.ally
+        self.previous_move = ()
 
     def swap_turn(self):
         if self.turn == self.board.ally:
@@ -27,8 +28,11 @@ def alpha_beta_search(state, TT):
     #check transposition table
     if (get_minimum_distance_from_enemy(state.board) > 2):
         move = TT.get_move(state.board)
+        
         if (move != False):
-            return move
+            valid = valid_move_check(state.board, state.board.ally[move[2]], move[1], move[2], move[3])
+            if (valid):
+                return move
         
     # test and print
     v_max = -math.inf
@@ -131,7 +135,7 @@ def next_states(state):
         elif (s_move[0] == 'MOVE'):
             new_state = create_new_node(state)
             move(new_state.board, s_move[1], s_move[2], s_move[3], new_state.turn)
-            
+            new_state.previous_move = s_move
             s[s_move] = new_state
         new_state.swap_turn()
     return s
@@ -153,11 +157,12 @@ def create_new_node(state):
 
 
 def eval(state):
-    
-    enemies_killed = 12-state.board.get_enemy_count()
+    parent = state.parent
+    enemies_killed = parent.board.get_enemy_count()-state.board.get_enemy_count()
     allies_left = state.board.get_ally_count()
+    enemies_left = state.board.get_enemy_count()
     
-    if (enemies_killed == 12 and allies_left > 0):
+    if (enemies_left == 0 and allies_left > 0):
         return math.inf
     if (allies_left == 0):
         return -math.inf
@@ -165,13 +170,17 @@ def eval(state):
     # 1. Escape if in danger
     # 3. Trying to escape, choose the best path
     minimal_loss = minimize_loss(state)
+    stacks_dead = escape(state)
     
     # 2. Evaluate whether to run/throw/capture
     sacrifice_one_for_many = 0
     sacrifice_few_for_many = explode_clusters(state)
     sacrifice_one_for_one = 0
     
-    eval_value = 1*enemies_killed + 2*allies_left + 0.2*minimal_loss + sacrifice_few_for_many + sacrifice_one_for_one
+    # evaluate moving towards enemy to attack
+    attack_potential = move_closer(state)
+
+    eval_value = (allies_left - enemies_left) + enemies_killed + stacks_dead + sacrifice_few_for_many + sacrifice_one_for_one + 0.125*attack_potential
     return eval_value
 
 
@@ -208,3 +217,22 @@ def explode_clusters(state):
                 num_enemy_in_range += state.board.enemy[coordinates].get_number()
         max_util.append(num_enemy_in_range-num_ally_in_range)
     return max([x for x in max_util])
+
+# encourage a stack if threatened to escape
+# returns a very negative value
+def escape(state):
+    our_stacks = state.board.ally.values()
+    num_piece_in_stacks_that_can_die = 0
+    for stack in our_stacks:
+        if (stack.get_number() >= 2 and get_minimum_distance_from_enemy(state.board) <= 2):
+            num_piece_in_stacks_that_can_die += stack.get_number()
+
+    return -(num_piece_in_stacks_that_can_die * 2)
+
+def move_closer(state):
+    move = state.previous_move
+    distance = 8
+    if (move != () and move[0] == "MOVE"):
+        distance = get_minimum_distance_from_enemy_to_our_stack(state.board, move[3])
+
+    return (8 - distance)
