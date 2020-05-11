@@ -95,3 +95,16 @@ class Directions(enum.Enum):
     right = 2
     up = 3
     down = 4
+
+def get_opposite_direction(action):
+        if (action != () and action[0] == "MOVE"):
+            old_coord = action[2]
+            new_coord = action[3]
+            if (old_coord[0] > new_coord[0]):
+                return Directions.right
+            elif (old_coord[0] < new_coord[0]):
+                return Directions.left
+            elif (old_coord[1] > new_coord[1]):
+                return Directions.up
+            else:
+                return Directions.down

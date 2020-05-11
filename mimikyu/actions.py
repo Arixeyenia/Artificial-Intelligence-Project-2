@@ -148,9 +148,9 @@ def get_minimum_distance_from_enemy_to_our_stack(board, stack):
 
 def get_enemy_pieces_in_blast_range(board, stack):
     all_enemy_stack = []
-    all_enemy_stack = range_check_get_enemy_pieces(board, stack.coordinates)
+    all_enemy_stack = range_check_get_enemy_pieces(board, stack.get_coordinates())
     for a_stack in all_enemy_stack:
-        more_stacks = range_check_get_enemy_pieces(board, a_stack.coordinates)
+        more_stacks = range_check_get_enemy_pieces(board, a_stack.get_coordinates())
         for one_stack in more_stacks:
             if one_stack in all_enemy_stack:
                 continue
@@ -166,9 +166,9 @@ def get_enemy_pieces_in_blast_range(board, stack):
 
 def get_ally_pieces_in_blast_range(board, stack):
     all_ally_stack = []
-    all_ally_stack = range_check_get_ally_pieces(board, stack.coordinates)
+    all_ally_stack = range_check_get_ally_pieces(board, stack.get_coordinates())
     for a_stack in all_ally_stack:
-        more_stacks = range_check_get_ally_pieces(board, a_stack.coordinates)
+        more_stacks = range_check_get_ally_pieces(board, a_stack.get_coordinates())
         for one_stack in more_stacks:
             if one_stack in all_ally_stack:
                 continue
@@ -181,3 +181,22 @@ def get_ally_pieces_in_blast_range(board, stack):
             all_ally_pieces.append(piece)
 
     return all_ally_pieces
+
+def get_stack_closest_to_enemy(board, turn):
+    player = turn
+    if (player == board.ally):
+        player2 = board.enemy
+    else:
+        player2 = board.ally
+
+    min_dist = math.inf
+    for a_stack in player.values():
+        distance_to_all_enemies = 0
+        for e_stack in player2.values():
+            distance_to_all_enemies += manhattan_distance(a_stack.get_coordinates(), e_stack.get_coordinates())
+        
+        if ( distance_to_all_enemies < min_dist):
+            min_dist = distance_to_all_enemies
+            closest_stack = a_stack
+
+    return closest_stack
