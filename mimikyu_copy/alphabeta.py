@@ -178,6 +178,7 @@ def eval(state):
     # evaluate moving towards enemy to attack
     attack_potential = move_closer(state)
     
+
     eval_value = total_enemies_killed + 1.2*(allies_left) + enemies_killed + stacks_dead + 0.125*attack_potential + maximize_gain
     return eval_value
 
@@ -200,17 +201,14 @@ def minimize_loss(state):
     return max([x for x in max_util])
 
 # get the highest number of tokens in a cluster your stack can explode and give highest value to that
-# get the highest number of tokens in a cluster your stack can explode and give highest value to that
 def explode_clusters(state):
     num_ally_in_range = 0
     num_enemy_in_range = 0
     max_util = []
-    
+
     for stack in state.board.ally.values():
-        
         all_coordinates = get_pieces_affected_by_boom(
             state.board, stack.get_coordinates())
-        
         for coordinates in all_coordinates:
             if coordinates in state.board.ally:
                 num_ally_in_range += state.board.ally[coordinates].get_number()
@@ -218,7 +216,7 @@ def explode_clusters(state):
                 num_enemy_in_range += state.board.enemy[coordinates].get_number()
         max_util.append(num_enemy_in_range-num_ally_in_range)
         
-    return max([x for x in max_util] + [0])
+    return max([x for x in max_util])
 
 # encourage a stack if threatened to escape
 # returns a very negative value
