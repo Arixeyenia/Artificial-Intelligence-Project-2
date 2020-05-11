@@ -1,8 +1,9 @@
 import math
 from random import randint
 from mimikyu_copy.game import Directions, Board, Piece, Stack
-from mimikyu_copy.actions import valid_move_check, move, boom, get_pieces_affected_by_boom, get_minimum_distance_from_enemy, get_minimum_distance_from_enemy_to_our_stack, get_enemy_pieces_in_blast_range, get_ally_pieces_in_blast_range
+from mimikyu_copy.actions import valid_move_check, move, boom, get_pieces_affected_by_boom, get_minimum_distance_from_enemy
 from mimikyu_copy.transposition_table import TT
+
 
 class Node:
     def __init__(self, board, parent, alpha=-math.inf, beta=math.inf):
@@ -16,7 +17,6 @@ class Node:
         else:
             self.depth = self.parent.depth + 1
         self.turn = self.board.ally
-        self.previous_move = ()
 
     def swap_turn(self):
         if self.turn == self.board.ally:
@@ -24,48 +24,47 @@ class Node:
         elif self.turn == self.board.enemy:
             self.turn = self.board.ally
 
+
 def alpha_beta_search(state, TT):
-    #check transposition table
-    if (get_minimum_distance_from_enemy(state.board) > 2):
-        move = TT.get_move(state.board)
-        
-        if (move != False):
-            valid = valid_move_check(state.board, state.board.ally[move[2]], move[1], move[2], move[3])
-            if (valid):
-                return move
-        
+    # check transposition table
+    # move = TT.get_move(state.board)
+    # if (move != False):
+    #     return move
+
     # test and print
     v_max = -math.inf
     best_move = None
     successors = next_states(state)
     for move in successors:
         v = max_value(successors[move], v_max, math.inf)
-        if v > v_max: 
+        if v > v_max:
             v_max = v
             best_move = move
-            
+
     return best_move
+
 
 def max_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
         # if enemy is within range, proceed capture strategy
-        if get_minimum_distance_from_enemy(state.board) <= 2:
-           return quiscence(state, alpha, beta)
-        else:
-            return eval(state)
+        # if get_minimum_distance_from_enemy(state.board) <= 2:
+        #     return quiscence(state, alpha, beta)
+        # else:
+        return eval(state)
     for s in next_states(state).values():
         alpha = max(alpha, min_value(s, alpha, beta))
         if alpha >= beta:
             return beta
     return alpha
 
+
 def min_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
         # if enemy is within range, proceed capture strategy
-        if get_minimum_distance_from_enemy(state.board) <= 2:
-           return quiscence(state, alpha, beta)
-        else:
-            return eval(state)
+        # if get_minimum_distance_from_enemy(state.board) <= 2:
+        #     return quiscence(state, alpha, beta)
+        # else:
+        return eval(state)
     for s in next_states(state).values():
         beta = min(alpha, max_value(s, alpha, beta))
         if beta <= alpha:
@@ -74,10 +73,11 @@ def min_value(state, alpha=-math.inf, beta=math.inf):
 
 
 def cutoff_test(state):
-    if state.depth == 10:
+    if state.depth == 2:
         return False
     else:
         return True
+
 
 def quiscence(state, alpha, beta):
     stand_pat = eval(state)
@@ -85,13 +85,13 @@ def quiscence(state, alpha, beta):
         return beta
     if (alpha < stand_pat):
         alpha = stand_pat
-    
+
     for capture in get_all_captures(state):
         new_state = create_new_node(state)
         new_state.swap_turn()
         boom(new_state.board, capture)
         score = -quiscence(new_state, -beta, -alpha)
-        
+
         if (score >= beta):
             return beta
         if (score > alpha):
@@ -100,6 +100,8 @@ def quiscence(state, alpha, beta):
     return alpha
 
 # get all the possible moves
+
+
 def get_all_moves(state):
     turn = state.turn
     moves = []
@@ -129,13 +131,14 @@ def next_states(state):
         if (s_move[0] == 'BOOM'):
             new_state = create_new_node(state)
             boom(new_state.board, s_move[1])
-            
+
             s[s_move] = new_state
 
         elif (s_move[0] == 'MOVE'):
             new_state = create_new_node(state)
-            move(new_state.board, s_move[1], s_move[2], s_move[3], new_state.turn)
-            new_state.previous_move = s_move
+            move(new_state.board, s_move[1],
+                 s_move[2], s_move[3], new_state.turn)
+
             s[s_move] = new_state
         new_state.swap_turn()
     return s
@@ -149,6 +152,8 @@ def get_all_captures(state):
     return capture
 
 # create new node and update the depth
+
+
 def create_new_node(state):
     new_board = state.board.get_copy()
     new_state = Node(new_board, state)
@@ -157,54 +162,17 @@ def create_new_node(state):
 
 
 def eval(state):
-    parent = state.parent
-    enemies_killed = parent.board.get_enemy_count()-state.board.get_enemy_count()
-    total_enemies_killed = 12-state.board.get_enemy_count()
-    allies_left = state.board.get_ally_count()
-    enemies_left = state.board.get_enemy_count()
+
+    num_enemy = state.board.get_enemy_count()
+    num_ally = state.board.get_ally_count()
     
-    if (enemies_left == 0 and allies_left > 0):
+    if (num_enemy == 0 and num_ally > 0):
         return math.inf
-    if (allies_left == 0):
+    if (num_ally == 0):
         return -math.inf
     
-    # 1. Escape if in danger
-    # 3. Trying to escape, choose the best path
-    minimal_loss = minimize_loss(state)
-    stacks_dead = escape(state)
-    
-    # 2. Evaluate whether to run/throw/capture
-    maximize_gain = explode_clusters(state)
-    # evaluate moving towards enemy to attack
-    attack_potential = move_closer(state)
-    
-
-    eval_value = total_enemies_killed + 1.2*(allies_left) + enemies_killed + stacks_dead + 0.125*attack_potential + maximize_gain
-    return eval_value
-
-# making sure when the enemy wants to explode your cluster, they explode a lot of themselves too
-def minimize_loss(state):
-    num_ally_in_enemy_range = 0
-    num_enemy_in_enemy_range = 0
-    max_util = []
-
-    for stack in state.board.enemy.values():
-        all_coordinates = get_pieces_affected_by_boom(
-            state.board, stack.get_coordinates())
-        for coordinates in all_coordinates:
-            if coordinates in state.board.ally:
-                num_ally_in_enemy_range += state.board.ally[coordinates].get_number()
-            else:
-                num_enemy_in_enemy_range += state.board.enemy[coordinates].get_number()
-        max_util.append(num_enemy_in_enemy_range-num_ally_in_enemy_range)
-        
-    return max([x for x in max_util])
-
-# get the highest number of tokens in a cluster your stack can explode and give highest value to that
-def explode_clusters(state):
     num_ally_in_range = 0
     num_enemy_in_range = 0
-    max_util = []
 
     for stack in state.board.ally.values():
         all_coordinates = get_pieces_affected_by_boom(
@@ -214,27 +182,28 @@ def explode_clusters(state):
                 num_ally_in_range += state.board.ally[coordinates].get_number()
             else:
                 num_enemy_in_range += state.board.enemy[coordinates].get_number()
-        max_util.append(num_enemy_in_range-num_ally_in_range)
-        
-    return max([x for x in max_util])
 
-# encourage a stack if threatened to escape
-# returns a very negative value
-# downside: discourages player to make stacks
-def escape(state):
-    our_stacks = state.board.ally.values()
-    num_piece_in_stacks_that_can_die = 0
-    for stack in our_stacks:
-        if (stack.get_number() >= 2 and get_minimum_distance_from_enemy(state.board) <= 2):
-            num_piece_in_stacks_that_can_die += stack.get_number()
+    diff_ally_boom = num_enemy_in_range - num_ally_in_range
 
-    return -(num_piece_in_stacks_that_can_die * 2)
+    # get number of enemies and allies token within enemy's range of explosion
+    num_ally_in_enemy_range = 0
+    num_enemy_in_enemy_range = 0
 
-# using previous move to ...
-def move_closer(state):
-    move = state.previous_move
-    distance = 8
-    if (move != () and move[0] == "MOVE"):
-        distance = get_minimum_distance_from_enemy_to_our_stack(state.board, move[3])
+    for stack in state.board.enemy.values():
+        all_coordinates = get_pieces_affected_by_boom(
+            state.board, stack.get_coordinates())
+        for coordinates in all_coordinates:
+            if coordinates in state.board.ally:
+                num_ally_in_enemy_range += state.board.ally[coordinates].get_number(
+                )
+            else:
+                num_enemy_in_enemy_range += state.board.enemy[coordinates].get_number(
+                )
 
-    return (8 - distance)
+    diff_enemy_boom = num_enemy_in_enemy_range - num_ally_in_enemy_range
+
+    # evaluation value
+    eval_value = 1.5*(12-num_enemy) + (num_ally) + \
+        num_ally_in_range
+
+    return eval_value

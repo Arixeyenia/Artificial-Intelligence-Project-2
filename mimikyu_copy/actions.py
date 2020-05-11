@@ -92,34 +92,6 @@ def range_check(board, coordinates):
                 all_coordinates.append(check_coord)
     return all_coordinates
 
-def range_check_get_enemy_pieces(board, coordinates):
-    enemy_pieces = []
-    top_left = (coordinates[0] - 1, coordinates[1] + 1)
-
-    for x in range(3):
-        for y in range(3):
-            check_coord = (top_left[0] + x, top_left[1] - y)
-            if check_coord in board.get_board_dict():
-                if (x == 1 and y == 1):
-                    continue
-                if check_coord in board.enemy:
-                    enemy_pieces.append(board.enemy[check_coord])
-    return enemy_pieces
-
-def range_check_get_ally_pieces(board, coordinates):
-    ally_pieces = []
-    top_left = (coordinates[0] - 1, coordinates[1] + 1)
-
-    for x in range(3):
-        for y in range(3):
-            check_coord = (top_left[0] + x, top_left[1] - y)
-            if check_coord in board.get_board_dict():
-                if (x == 1 and y == 1):
-                    continue
-                if check_coord in board.ally:
-                    ally_pieces.append(board.ally[check_coord])
-    return ally_pieces
-
 def get_minimum_distance_from_enemy(board):
     min_dist = math.inf
 
@@ -135,49 +107,3 @@ def get_minimum_distance_from_enemy(board):
 def sort_list_of_coordinates(list_of_coordinates):
     list_of_coordinates.sort(key=itemgetter(0, 1))
     return list_of_coordinates
-
-def get_minimum_distance_from_enemy_to_our_stack(board, stack):
-    min_dist = math.inf
-
-    for e_stack in board.enemy:
-        distance = manhattan_distance(stack, e_stack)
-        if (distance < min_dist):
-            min_dist = distance
-
-    return min_dist
-
-def get_enemy_pieces_in_blast_range(board, stack):
-    all_enemy_stack = []
-    all_enemy_stack = range_check_get_enemy_pieces(board, stack.coordinates)
-    for a_stack in all_enemy_stack:
-        more_stacks = range_check_get_enemy_pieces(board, a_stack.coordinates)
-        for one_stack in more_stacks:
-            if one_stack in all_enemy_stack:
-                continue
-            else:
-                all_enemy_stack.append(one_stack)
-    
-    all_enemy_pieces = []
-    for stack in all_enemy_stack:
-        for piece in stack.pieces:
-            all_enemy_pieces.append(piece)
-
-    return all_enemy_pieces
-
-def get_ally_pieces_in_blast_range(board, stack):
-    all_ally_stack = []
-    all_ally_stack = range_check_get_ally_pieces(board, stack.coordinates)
-    for a_stack in all_ally_stack:
-        more_stacks = range_check_get_ally_pieces(board, a_stack.coordinates)
-        for one_stack in more_stacks:
-            if one_stack in all_ally_stack:
-                continue
-            else:
-                all_ally_stack.append(one_stack)
-    
-    all_ally_pieces = []
-    for stack in all_ally_stack:
-        for piece in stack.pieces:
-            all_ally_pieces.append(piece)
-
-    return all_ally_pieces
