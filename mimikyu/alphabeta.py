@@ -49,10 +49,10 @@ def alpha_beta_search(state, TT):
 def max_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
         # if enemy is within range, proceed capture strategy
-        #if get_minimum_distance_from_enemy(state.board) <= 2:
-        #    return quiscence(state, alpha, beta)
-        #else:
-        return eval(state)
+        if get_minimum_distance_from_enemy(state.board) <= 2:
+           return quiscence(state, alpha, beta)
+        else:
+            return eval(state)
     for s in next_states(state).values():
         alpha = max(alpha, min_value(s, alpha, beta))
         if alpha >= beta:
@@ -62,10 +62,10 @@ def max_value(state, alpha=-math.inf, beta=math.inf):
 def min_value(state, alpha=-math.inf, beta=math.inf):
     if cutoff_test(state):
         # if enemy is within range, proceed capture strategy
-        # if get_minimum_distance_from_enemy(state.board) <= 2:
-        #    return quiscence(state, alpha, beta)
-        # else:
-        return eval(state)
+        if get_minimum_distance_from_enemy(state.board) <= 2:
+           return quiscence(state, alpha, beta)
+        else:
+            return eval(state)
     for s in next_states(state).values():
         beta = min(alpha, max_value(s, alpha, beta))
         if beta <= alpha:
@@ -159,6 +159,7 @@ def create_new_node(state):
 def eval(state):
     parent = state.parent
     enemies_killed = parent.board.get_enemy_count()-state.board.get_enemy_count()
+    total_enemies_killed = 12-state.board.get_enemy_count()
     allies_left = state.board.get_ally_count()
     enemies_left = state.board.get_enemy_count()
     
@@ -167,23 +168,27 @@ def eval(state):
     if (allies_left == 0):
         return -math.inf
     
-    # 1. Escape if in danger
-    # 3. Trying to escape, choose the best path
+    # evaluate how close an enemy is to a stack and start running away
     minimal_loss = minimize_loss(state)
     stacks_dead = escape(state)
     
-    # 2. Evaluate whether to run/throw/capture
-    sacrifice_one_for_many = 0
-    sacrifice_few_for_many = explode_clusters(state)
-    sacrifice_one_for_one = 0
+    # explode when theres high number of clusters
+    maximize_gain = cluster_potential(state)
     
     # evaluate moving towards enemy to attack
     attack_potential = move_closer(state)
-
-    eval_value = (allies_left - enemies_left) + enemies_killed + stacks_dead + sacrifice_few_for_many + sacrifice_one_for_one + 0.125*attack_potential
+    
+    # evaluate creating a stack to advance
+    stack_attack = 0
+    
+    # evaluate creating a stack to escape
+    stack_escape = 0
+    
+    # eval_value = total_enemies_killed + 1.2*(allies_left) + enemies_killed + stacks_dead + 0.125*attack_potential + maximize_gain
+    eval_value = 5*total_enemies_killed + 6*(allies_left) + maximize_gain + 0.5 * attack_potential + stacks_dead
     return eval_value
 
-
+# making sure when the enemy wants to explode your cluster, they explode a lot of themselves too
 def minimize_loss(state):
     num_ally_in_enemy_range = 0
     num_enemy_in_enemy_range = 0
@@ -199,24 +204,32 @@ def minimize_loss(state):
                 num_enemy_in_enemy_range += state.board.enemy[coordinates].get_number()
         max_util.append(num_enemy_in_enemy_range-num_ally_in_enemy_range)
         
-    return max([x for x in max_util])
-
-def explode_clusters(state):
+    return max([x for x in max_util] + [0])
     
-    num_ally_in_range = 0
-    num_enemy_in_range = 0
-    max_util = []
-
-    for stack in state.board.ally.values():
-        all_coordinates = get_pieces_affected_by_boom(
-            state.board, stack.get_coordinates())
-        for coordinates in all_coordinates:
-            if coordinates in state.board.ally:
-                num_ally_in_range += state.board.ally[coordinates].get_number()
+# evaluate the maximal the number of enemies killed in a cluster
+def cluster_potential(state):
+    max_score = -math.inf
+    unchecked = set(list(state.board.ally.keys()))
+    
+    while len(unchecked) > 0:
+        n_allies = 0
+        n_enemies = 0
+        
+        next_elem = unchecked.pop()
+        pieces_affected = set(get_pieces_affected_by_boom(state.board, next_elem))
+        
+        for piece in pieces_affected:
+            if piece in state.board.ally:
+                n_allies += state.board.ally[piece].get_number()
             else:
-                num_enemy_in_range += state.board.enemy[coordinates].get_number()
-        max_util.append(num_enemy_in_range-num_ally_in_range)
-    return max([x for x in max_util])
+                n_enemies += state.board.enemy[piece].get_number()
+            if piece != next_elem and piece in state.board.ally:
+                unchecked.remove(piece)
+
+        score = n_enemies - n_allies
+        max_score = max(max_score, score)
+    
+    return max_score
 
 # encourage a stack if threatened to escape
 # returns a very negative value
@@ -229,6 +242,7 @@ def escape(state):
 
     return -(num_piece_in_stacks_that_can_die * 2)
 
+# using previous move to ...
 def move_closer(state):
     move = state.previous_move
     distance = 8
