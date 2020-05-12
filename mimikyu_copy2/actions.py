@@ -1,6 +1,6 @@
 import math
 from operator import itemgetter
-from mimikyu.game import Piece, Stack, Board, Directions
+from mimikyu_copy2.game import Piece, Stack, Board, Directions
 
 # get all the possible moes
 def move(board, no_pieces, old_coord, new_coord, turn):

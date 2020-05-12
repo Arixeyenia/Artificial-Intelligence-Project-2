@@ -1,8 +1,8 @@
 import math
 from random import randint
-from mimikyu.game import Directions, Board, Piece, Stack, get_opposite_direction
-from mimikyu.actions import valid_move_check, manhattan_distance, move, boom, get_pieces_affected_by_boom, get_minimum_distance_from_enemy, get_minimum_distance_from_enemy_to_our_stack, get_enemy_pieces_in_blast_range, get_ally_pieces_in_blast_range, get_stack_closest_to_enemy
-from mimikyu.transposition_table import TT
+from mimikyu_copy2.game import Directions, Board, Piece, Stack, get_opposite_direction
+from mimikyu_copy2.actions import valid_move_check, manhattan_distance, move, boom, get_pieces_affected_by_boom, get_minimum_distance_from_enemy, get_minimum_distance_from_enemy_to_our_stack, get_enemy_pieces_in_blast_range, get_ally_pieces_in_blast_range, get_stack_closest_to_enemy
+from mimikyu_copy2.transposition_table import TT
 
 
 class Node:
@@ -209,10 +209,10 @@ def evaluate(state):
     if (allies_left == 0):
         return -math.inf
         
-    # eval_value = (allies_left - enemies_left) + enemies_killed + escape(stack) + sacrifice_few_for_many + sacrifice_one_for_one + 0.125*attack_potential
-    # eval_value = 0.5*evaluate_move_taken(state) + 0.125*move_closer(state) + escape(stack)
+    # eval_value = (allies_left - enemies_left) + enemies_killed + escape(state) + sacrifice_few_for_many + sacrifice_one_for_one + 0.125*attack_potential
+    eval_value = 0.5*evaluate_move_taken(state) + 0.125*move_closer(state) + escape(state)
     
-    eval_value = 20*allies_left + 20*(12 - enemies_left) + 0.5*get_biggest_boom(state) + move_closer(state)
+    # eval_value = 20*allies_left + 20*(12 - enemies_left) + 0.5*get_biggest_boom(state) + move_closer(state)
     return eval_value
 
 

@@ -1,7 +1,7 @@
-from mimikyu_copy.game import Piece, Board, Directions, Stack
-from mimikyu_copy.actions import move, boom, valid_move_check
-from mimikyu_copy.alphabeta import Node, alpha_beta_search
-from mimikyu_copy.transposition_table import TT
+from mimikyu_copy2.game import Piece, Board, Directions, Stack
+from mimikyu_copy2.actions import move, boom, valid_move_check
+from mimikyu_copy2.alphabeta import Node, alpha_beta_search
+from mimikyu_copy2.transposition_table import TT
 from random import randint
 
 
@@ -58,6 +58,7 @@ class ExamplePlayer:
         # return moves[randint(0, len(moves)-1)]
         return alpha_beta_search(Node(self.game_board, None), self.TT)
         
+        
 
     def update(self, colour, action):
         """
@@ -90,7 +91,6 @@ class ExamplePlayer:
         elif action[0] == "BOOM":
             boom(self.game_board, action[1])
 
-    # TODO: delete later (only to test for random)
     # get all the possible moes
     def get_all_moves(self):
         turn = self.game_board.ally
