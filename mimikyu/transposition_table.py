@@ -1,7 +1,9 @@
 from operator import itemgetter
+import random
 
-from mimikyu.game import Board
+from mimikyu.game import Board, Stack
 from mimikyu.actions import sort_list_of_coordinates
+import mimikyu.hash_table
 
 class TT:
     def __init__(self, colour):
@@ -45,3 +47,22 @@ class TT:
                 return self.TT[our_coordinates]
 
         return False
+
+class PVTT:
+    def __init__(self):
+        self.PV = {}
+
+    def insert_PV(self, board, move, turn):
+        HT = mimikyu.hash_table._our_hash_table
+        hashed_position = HT.hash_board(board, turn)
+        self.PV[hashed_position] = move
+
+    def get_PV(self, board, turn):
+        HT = mimikyu.hash_table._our_hash_table
+        hashed_position = HT.hash_board(board, turn)
+
+        if hashed_position in self.PV:
+            return self.PV[hashed_position]
+        else:
+            return None
+

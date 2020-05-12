@@ -1,5 +1,6 @@
 import enum
 import copy
+import time
 
 
 class Piece:
@@ -96,15 +97,47 @@ class Directions(enum.Enum):
     up = 3
     down = 4
 
-def get_opposite_direction(action):
+    @staticmethod
+    def get_opposite_direction(action):
+            if (action != () and action[0] == "MOVE"):
+                old_coord = action[2]
+                new_coord = action[3]
+                if (old_coord[0] > new_coord[0]):
+                    return Directions.right
+                elif (old_coord[0] < new_coord[0]):
+                    return Directions.left
+                elif (old_coord[1] > new_coord[1]):
+                    return Directions.up
+                else:
+                    return Directions.down
+
+    @staticmethod
+    def get_direction(action):
         if (action != () and action[0] == "MOVE"):
-            old_coord = action[2]
-            new_coord = action[3]
-            if (old_coord[0] > new_coord[0]):
-                return Directions.right
-            elif (old_coord[0] < new_coord[0]):
-                return Directions.left
-            elif (old_coord[1] > new_coord[1]):
-                return Directions.up
-            else:
-                return Directions.down
+                old_coord = action[2]
+                new_coord = action[3]
+                if (old_coord[0] > new_coord[0]):
+                    return Directions.left
+                elif (old_coord[0] < new_coord[0]):
+                    return Directions.right
+                elif (old_coord[1] > new_coord[1]):
+                    return Directions.down
+                else:
+                    return Directions.up
+
+class MyTimer:
+    def __init__(self):
+        self.start = 0
+        self.end = 0
+        self.time_taken = 0
+
+    def start_timer(self):
+        self.start = time.process_time()
+
+    def stop_timer(self):
+        self.end = time.process_time()
+        self.time_taken = self.end - self.start
+        return self.time_taken
+
+    def get_current_time_taken(self):
+        return time.process_time() - self.start

@@ -2,6 +2,8 @@ from mimikyu.game import Piece, Board, Directions, Stack
 from mimikyu.actions import move, boom, valid_move_check
 from mimikyu.alphabeta import Node, alpha_beta_search
 from mimikyu.transposition_table import TT
+from mimikyu.hash_table import initialise_our_hash
+
 from random import randint
 
 
@@ -18,6 +20,11 @@ class ExamplePlayer:
         strings "white" or "black" correspondingly.
         """
         # TODO: Set up state representation.
+
+        #init hash table
+        initialise_our_hash()
+
+
         self.game_board = Board({}, {}, colour)
         self.colour = colour
 

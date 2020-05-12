@@ -1,16 +1,18 @@
 import math
 from random import randint
-from mimikyu.game import Directions, Board, Piece, Stack, get_opposite_direction
+from mimikyu.game import Directions, Board, Piece, Stack, MyTimer
 from mimikyu.actions import valid_move_check, manhattan_distance, move, boom, get_pieces_affected_by_boom, get_minimum_distance_from_enemy, get_minimum_distance_from_enemy_to_our_stack, get_enemy_pieces_in_blast_range, get_ally_pieces_in_blast_range, get_stack_closest_to_enemy
-from mimikyu.transposition_table import TT
+from mimikyu.transposition_table import TT, PVTT
 
+_timer = None
+_nodes_created = None
+_dynamic_depth = None
+_PVTT = None
 
 class Node:
-    def __init__(self, board, parent, alpha=-math.inf, beta=math.inf):
+    def __init__(self, board, parent):
         self.board = board
         self.parent = parent
-        self.alpha = alpha
-        self.beta = beta
         self.successors = []
         if self.parent is None:
             self.depth = 0
@@ -45,39 +47,73 @@ def alpha_beta_search(state, TT):
                 return move
         
     # test and print
-    v_max = -math.inf
-    best_move = None
-    successors = next_states(state)
-    for move in successors:
-        v = min_value(successors[move], v_max, math.inf)
-        # if (v == math.inf and move[0] == "BOOM"):
-        #     return move
-        if v > v_max or best_move is None: 
-            v_max = v
-            best_move = move
 
+    global _timer
+    _timer = MyTimer()
+    _timer.start_timer()
+    global _nodes_created
+    _nodes_created = 0
+    global _dynamic_depth
+    _dynamic_depth = 1
+    global _PVTT
+    _PVTT = PVTT()
+    
+    best_move = iterative_alpha_beta_search(state)
+
+    print("Time taken: "+ str(_timer.time_taken) + " and nodes expanded: "+ str(_nodes_created))
     return best_move
 
 
+def iterative_alpha_beta_search(state):
+    global _timer
+    global _dynamic_depth
+    best_move = None
+    while _timer.get_current_time_taken() < 4:
+        
+        v_max = -math.inf
+        best_move = None
+
+        successors = next_states(state)
+        for move in successors:
+            v = min_value(successors[move], v_max, math.inf)
+            # if (v == math.inf and move[0] == "BOOM"):
+            #     return move
+            if v > v_max or best_move is None: 
+                v_max = v
+                best_move = move
+
+        _dynamic_depth += 1
+        
+    
+    _timer.stop_timer()
+    return best_move
+        
 # Maximizing player returns highest value for a move. Record alpha as the current largest value and prune branches worse than that
 def max_value(state, alpha=-math.inf, beta=math.inf):
+    global _PVTT
+    PV = None
     if cutoff_test(state):
         # if enemy is within range, proceed capture strategy
         #if get_minimum_distance_from_enemy(state.board) <= 2:
         #    return quiscence(state, alpha, beta)
         #else:
         return evaluate(state)
-    
-    for s in next_states(state).values():
-        alpha = max(alpha, min_value(s, alpha, beta))
+    for key, s in next_states(state).items():
+        score = min_value(s, alpha, beta)
+        if (score > alpha):
+            PV = key
+        alpha = max(alpha, score)
         if alpha >= beta:
             return beta
 
+    _PVTT.insert_PV(state.board, PV, state.turn)
     return alpha
 
 
 # Minimizing player returns lowest value for a move and updates beta to lowest value
 def min_value(state, alpha=-math.inf, beta=math.inf):
+    global _PVTT
+    PV = None
     if cutoff_test(state):
         # if enemy is within range, proceed capture strategy
         # if get_minimum_distance_from_enemy(state.board) <= 2:
@@ -85,17 +121,22 @@ def min_value(state, alpha=-math.inf, beta=math.inf):
         # else:
         return evaluate(state)
 
-    for s in next_states(state).values():
-        beta = min(beta, max_value(s, alpha, beta))
+    for key, s in next_states(state).items():
+        score = max_value(s, alpha, beta)
+        if (score < beta):
+            PV = key
+        beta = min(beta, score)
         if beta <= alpha:
             return alpha
 
+    _PVTT.insert_PV(state.board, PV, state.turn)
     return beta
 
 
 # Specify cutoff depth of where the tree will search to
 def cutoff_test(state):
-    if (state.depth == 4 or game_over(state)):
+    global _dynamic_depth
+    if (state.depth == _dynamic_depth or game_over(state)):
         return True
     else:
         return False
@@ -133,27 +174,37 @@ def quiscence(state, alpha, beta):
 
 # alternative getting moves
 def get_critical_moves(state):
+    global _PVTT
     closest_stack = get_stack_closest_to_enemy(state.board, state.turn)
     moves = []
+    
+    pv_move = _PVTT.get_PV(state.board, state.turn)
+    if (pv_move is not None):
+        moves.insert(0, pv_move)
     for no_pieces in range(1, closest_stack.get_number() + 1):
         for spaces in range(1, closest_stack.get_number() + 1):
             piece = closest_stack.get_substack(no_pieces)
             current_coordinates = piece.get_coordinates()
 
             for d in Directions:
-                if (state.parent is not None and get_opposite_direction(state.parent.previous_move) == d):
+                if (state.parent is not None and Directions.get_opposite_direction(state.parent.previous_move) == d):
                     continue
-                new_coordinate = piece.get_new_coordinates(d, spaces)
-                valid = valid_move_check(state.board, closest_stack, no_pieces, current_coordinates, new_coordinate)
-                if not valid:
-                    continue
-                else:
-                    moves.append(
-                        ('MOVE', no_pieces, current_coordinates, new_coordinate))
+                move = create_valid_move_with_direction(piece, current_coordinates, spaces, closest_stack, d, state, no_pieces)
+                if (move is not None and (move in moves) == False ):
+                    moves.append(move)
 
     
     moves.append(('BOOM', closest_stack.get_coordinates()))
     return moves
+
+
+def create_valid_move_with_direction(piece, current_coordinates, spaces, closest_stack, d, state, no_pieces):
+    new_coordinate = piece.get_new_coordinates(d, spaces)
+    valid = valid_move_check(state.board, closest_stack, no_pieces, current_coordinates, new_coordinate)
+    if not valid:
+        return None
+    else:
+        return ('MOVE', no_pieces, current_coordinates, new_coordinate)
 
 
 # Get the next succesor states
@@ -192,6 +243,8 @@ def get_all_captures(state):
 def create_new_node(state):
     new_board = state.board.get_copy()
     new_state = Node(new_board, state)
+    global _nodes_created
+    _nodes_created += 1
     # new_state.swap_turn()
     return new_state
 
